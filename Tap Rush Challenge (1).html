@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tap Rush Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#1a1033;--bg2:#2c1a5c;--ink:#fff7e6;--sun:#ffcf33;--aqua:#2de2c8;--pink:#ff4f8b;--mute:#b3a6d8;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-weight:700;touch-action:manipulation;overflow:hidden}
+body{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);background:radial-gradient(120% 80% at 50% 0%,var(--bg2),var(--bg))}
+h1,h2,.big,button{font-family:"Lilita One",Impact,system-ui,sans-serif;font-weight:400}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;padding-top:calc(20px + env(safe-area-inset-top,0px));text-align:center}
+.screen.on{display:flex}
+h1{font-size:clamp(44px,15vw,76px);line-height:.95;margin:0;color:var(--sun);text-shadow:0 5px 0 #c4561e,0 10px 24px rgba(0,0,0,.4);transform:rotate(-3deg)}
+h1 span{display:block;color:var(--aqua);text-shadow:0 5px 0 #0b7f8c,0 10px 24px rgba(0,0,0,.4);font-size:.62em}
+h2{font-size:34px;margin:0;color:var(--sun)}
+.btn{width:min(320px,86%);min-height:64px;border:0;border-radius:20px;font-size:26px;color:#2a1200;background:var(--sun);box-shadow:0 6px 0 #c4561e;cursor:pointer;transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 #c4561e}
+.btn.alt{background:var(--aqua);box-shadow:0 6px 0 #0b7f8c;font-size:22px;min-height:56px}
+.btn.alt:active{box-shadow:0 1px 0 #0b7f8c}
+.stat{color:var(--mute);font-size:18px}
+.stat b{color:var(--ink)}
+.daily{width:min(320px,86%);border:2px dashed var(--pink);border-radius:16px;padding:10px 14px;font-size:16px}
+.daily.done{border-style:solid;border-color:var(--aqua)}
+#hud{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:0 18px;z-index:5;pointer-events:none}
+.big{font-size:44px;line-height:1}
+.lbl{font-size:13px;color:var(--mute);font-family:Nunito;font-weight:800}
+#bar{position:absolute;left:0;top:0;height:6px;background:linear-gradient(90deg,var(--pink),var(--sun));width:100%;transform-origin:left;z-index:6}
+#arena{position:absolute;inset:0;touch-action:none}
+#arena.shake{animation:sh .25s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.t{position:absolute;border-radius:50%;display:grid;place-items:center;font-family:"Lilita One";transform:scale(0);animation:pop .16s forwards}
+@keyframes pop{to{transform:scale(1)}}
+.t.n{background:radial-gradient(circle at 35% 30%,#ff9ab9,var(--pink));box-shadow:0 0 0 6px rgba(255,79,139,.3),0 6px 0 #a3194b}
+.t.g{background:radial-gradient(circle at 35% 30%,#fff1a8,var(--sun));box-shadow:0 0 0 6px rgba(255,207,51,.35),0 6px 0 #b8860b;color:#6b4300;font-size:22px}
+.t.b{background:#0e0720;border:4px solid #7a6bb0;color:#cbbcf2;font-size:34px}
+.t.out{animation:out .14s forwards}
+@keyframes out{to{transform:scale(0);opacity:0}}
+.t.hit{animation:hit .18s forwards}
+@keyframes hit{to{transform:scale(1.5);opacity:0}}
+.fl{position:absolute;font-family:"Lilita One";font-size:30px;pointer-events:none;animation:fl .7s forwards;z-index:4}
+@keyframes fl{to{transform:translateY(-60px);opacity:0}}
+#ach{max-height:56vh;overflow:auto;width:min(340px,92%);display:flex;flex-direction:column;gap:8px}
+.a{padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.07);text-align:left;font-size:16px;color:var(--mute)}
+.a.u{background:rgba(45,226,200,.16);color:var(--ink)}
+.new{color:var(--aqua);font-size:16px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important}}
+</style></head>
+<body>
+<div id="start" class="screen on">
+  <h1>Tap Rush<span>Challenge</span></h1>
+  <div class="stat">Best score <b id="sBest">0</b></div>
+  <div id="daily" class="daily"></div>
+  <button class="btn" id="play">Play</button>
+  <button class="btn alt" id="goAch">Achievements</button>
+  <button class="btn alt" id="snd">Sound: on</button>
+</div>
+
+<div id="game" class="screen" style="padding:0">
+  <div id="bar"></div>
+  <div id="hud">
+    <div><div class="lbl">Score</div><div class="big" id="hScore">0</div></div>
+    <div style="text-align:center"><div class="lbl">Combo</div><div class="big" id="hCombo" style="color:var(--aqua)">x1</div></div>
+    <div style="text-align:right"><div class="lbl">Time</div><div class="big" id="hTime">30</div></div>
+  </div>
+  <div id="arena"></div>
+</div>
+
+<div id="result" class="screen">
+  <h2 id="rTitle">Time’s up!</h2>
+  <div class="big" id="rScore" style="font-size:84px;color:var(--ink)">0</div>
+  <div class="stat">Personal best <b id="rBest">0</b></div>
+  <div class="new" id="rNew"></div>
+  <div class="daily" id="rDaily"></div>
+  <div class="new" id="rAch"></div>
+  <button class="btn" id="again">Play again</button>
+  <button class="btn alt" id="menu">Menu</button>
+</div>
+
+<div id="achScreen" class="screen">
+  <h2>Achievements</h2>
+  <div id="ach"></div>
+  <button class="btn alt" id="back">Back</button>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i)};
+var DUR=30;
+
+/* ---------- Saved data (stays on this phone) ---------- */
+var KEY="trc_v1",D={best:0,games:0,ach:{},daily:{}};
+try{var s=localStorage.getItem(KEY);if(s)D=Object.assign(D,JSON.parse(s))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
+
+/* ---------- Ads hook: intentionally empty. A real, approved ad SDK
+   would be connected here after the game is packaged as an app. ---------- */
+var Ads={available:function(){return false}};
+
+/* ---------- Sound + vibration ---------- */
+var ac=null,soundOn=true;
+function tone(f,d,type,v){
+  if(!soundOn)return;
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    var o=ac.createOscillator(),g=ac.createGain();
+    o.type=type||"sine";o.frequency.value=f;
+    g.gain.value=v||.12;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);
+    o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d);
+  }catch(e){}
+}
+/* Original melody: each good tap plays the next note, so you play the song as you tap */
+var TUNE=[659,784,880,784,659,587,523,587,659,784,659,587,523,587,659,523,
+          880,988,1047,988,880,784,659,784,880,784,659,587,523,659,587,523],si=0;
+function note(gold){
+  var f=TUNE[si%TUNE.length];si++;
+  tone(f,.28,"triangle",.14);tone(f/2,.28,"sine",.08);
+  if(gold)tone(f*2,.2,"sine",.07);
+}
+function buzz(ms){if(soundOn&&navigator.vibrate)try{navigator.vibrate(ms)}catch(e){}}
+
+/* ---------- Daily challenge (same goal for everyone each day) ---------- */
+function today(){var d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()}
+function goal(){var h=0,t=today();for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))%1000;return 200+(h%5)*50}
+function dailyText(){
+  var el=$("daily"),done=D.daily[today()];
+  el.className="daily"+(done?" done":"");
+  el.textContent=done?"Daily challenge complete! Come back tomorrow.":"Daily challenge: score "+goal()+" or more today";
+}
+
+/* ---------- Achievements ---------- */
+var ACH=[
+ {id:"first",n:"First Rush",d:"Finish your first game",t:function(r){return true}},
+ {id:"s150",n:"Warm Up",d:"Score 150 in one game",t:function(r){return r.score>=150}},
+ {id:"s300",n:"On Fire",d:"Score 300 in one game",t:function(r){return r.score>=300}},
+ {id:"s500",n:"Rush Master",d:"Score 500 in one game",t:function(r){return r.score>=500}},
+ {id:"gold",n:"Gold Hunter",d:"Tap 4 gold stars in one game",t:function(r){return r.golds>=4}},
+ {id:"combo",n:"Combo King",d:"Reach a x4 combo",t:function(r){return r.maxCombo>=4}},
+ {id:"clean",n:"Clean Hands",d:"Finish with 0 mistakes and 15+ hits",t:function(r){return r.miss===0&&r.hits>=15}},
+ {id:"daily",n:"Daily Done",d:"Beat a daily challenge",t:function(r){return r.dailyWin}}
+];
+function showAch(){
+  var h="";
+  ACH.forEach(function(a){h+='<div class="a'+(D.ach[a.id]?' u':'')+'"><b>'+(D.ach[a.id]?"✓ ":"")+a.n+'</b><br>'+a.d+'</div>'});
+  $("ach").innerHTML=h;
+}
+
+/* ---------- Screens ---------- */
+function show(id){
+  ["start","game","result","achScreen"].forEach(function(s){$(s).classList.toggle("on",s===id)});
+  if(id==="start"){$("sBest").textContent=D.best;dailyText()}
+}
+
+/* ---------- Game ---------- */
+var arena=$("arena"),G=null,raf=0;
+
+function startGame(){
+  arena.innerHTML="";
+  si=0;G={score:0,left:DUR,combo:0,maxCombo:1,hits:0,miss:0,golds:0,last:0,next:400,items:[]};
+  $("hScore").textContent="0";$("hCombo").textContent="x1";$("hTime").textContent=DUR;
+  $("bar").style.transform="scaleX(1)";
+  show("game");
+  raf=requestAnimationFrame(loop);
+}
+
+function diff(){return Math.min(1,G.score/600)}   /* 0 easy -> 1 hard */
+
+function spawn(now){
+  var d=diff(),r=Math.random(),type="n";
+  if(r<.12+.14*d)type="b";else if(r<.24+.14*d)type="g";
+  var size=Math.round((type==="g"?70:84)-30*d);
+  var W=arena.clientWidth,H=arena.clientHeight,top=90,x,y,tries=0,ok;
+  do{
+    x=8+Math.random()*(W-size-16);y=top+Math.random()*(H-size-top-16);ok=true;
+    for(var i=0;i<G.items.length;i++){var o=G.items[i];if(Math.abs(o.x-x)<size+8&&Math.abs(o.y-y)<size+8)ok=false}
+  }while(!ok&&++tries<12);
+  var el=document.createElement("div");
+  el.className="t "+type;
+  el.style.cssText="width:"+size+"px;height:"+size+"px;left:"+x+"px;top:"+y+"px";
+  el.textContent=type==="g"?"+30":type==="b"?"×":"";
+  var life=(type==="g"?1000:1500)-(type==="g"?400:800)*d;
+  var item={el:el,type:type,x:x,y:y,die:now+life};
+  el._i=item;G.items.push(item);arena.appendChild(el);
+}
+
+function remove(item,cls){
+  var i=G.items.indexOf(item);if(i>-1)G.items.splice(i,1);
+  item.el.className="t "+item.type+" "+cls;
+  setTimeout(function(){if(item.el.parentNode)item.el.parentNode.removeChild(item.el)},200);
+}
+
+function floatText(x,y,txt,color){
+  var f=document.createElement("div");f.className="fl";f.textContent=txt;f.style.cssText="left:"+x+"px;top:"+y+"px;color:"+color;
+  arena.appendChild(f);setTimeout(function(){if(f.parentNode)f.parentNode.removeChild(f)},700);
+}
+
+function setScore(v){G.score=Math.max(0,v);$("hScore").textContent=G.score}
+function setCombo(c){G.combo=c;var m=Math.min(5,1+Math.floor(c/4));if(m>G.maxCombo)G.maxCombo=m;$("hCombo").textContent="x"+m}
+function mult(){return Math.min(5,1+Math.floor(G.combo/4))}
+
+function mistake(x,y,pts){
+  G.miss++;setCombo(0);setScore(G.score-pts);
+  floatText(x-14,y-20,"-"+pts,"#ff6b6b");
+  tone(140,.18,"sawtooth",.1);buzz(60);
+  arena.classList.remove("shake");void arena.offsetWidth;arena.classList.add("shake");
+}
+
+arena.addEventListener("pointerdown",function(e){
+  if(!G)return;
+  e.preventDefault();
+  var t=e.target.closest?e.target.closest(".t"):null;
+  var rect=arena.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;
+  if(!t||!t._i){mistake(x,y,3);return}       /* tapped empty space */
+  var it=t._i;
+  if(it.type==="b"){remove(it,"out");mistake(x,y,15);return}  /* decoy */
+  var base=it.type==="g"?30:10,pts=base*mult();
+  G.hits++;if(it.type==="g")G.golds++;
+  setCombo(G.combo+1);setScore(G.score+pts);
+  floatText(x-14,y-30,"+"+pts,it.type==="g"?"#ffcf33":"#fff7e6");
+  note(it.type==="g");buzz(15);
+  remove(it,"hit");
+},{passive:false});
+
+function loop(now){
+  if(!G)return;
+  if(!G.last)G.last=now;
+  var dt=(now-G.last)/1000;G.last=now;
+  G.left-=dt;
+  if(G.left<=0){G.left=0;return end()}
+  $("hTime").textContent=Math.ceil(G.left);
+  $("bar").style.transform="scaleX("+(G.left/DUR)+")";
+  var d=diff(),maxT=2+Math.floor(d*2.5);
+  for(var i=G.items.length-1;i>=0;i--){
+    var it=G.items[i];
+    if(now>it.die){if(it.type!=="b"&&G.combo>0)setCombo(0);remove(it,"out")}
+  }
+  if(now>=G.next&&G.items.length<maxT){spawn(now);G.next=now+700-420*d+Math.random()*150}
+  raf=requestAnimationFrame(loop);
+}
+
+function end(){
+  cancelAnimationFrame(raf);
+  var r={score:G.score,golds:G.golds,maxCombo:G.maxCombo,miss:G.miss,hits:G.hits,dailyWin:false};
+  G=null;arena.innerHTML="";
+  D.games++;
+  var isNew=r.score>D.best&&r.score>0;if(isNew)D.best=r.score;
+  var dl=today(),dailyMsg;
+  if(D.daily[dl]){dailyMsg="Daily challenge already complete today."}
+  else if(r.score>=goal()){D.daily[dl]=1;r.dailyWin=true;dailyMsg="Daily challenge complete!"}
+  else dailyMsg="Daily challenge: "+goal()+" needed. You scored "+r.score+".";
+  var got=[];
+  ACH.forEach(function(a){if(!D.ach[a.id]&&a.t(r)){D.ach[a.id]=1;got.push(a.n)}});
+  save();
+  $("rScore").textContent=r.score;$("rBest").textContent=D.best;
+  $("rNew").textContent=isNew?"New personal best!":"";
+  $("rDaily").textContent=dailyMsg;$("rDaily").className="daily"+(D.daily[dl]?" done":"");
+  $("rAch").textContent=got.length?"Unlocked: "+got.join(", "):"";
+  tone(660,.15,"triangle");setTimeout(function(){tone(880,.25,"triangle")},150);
+  show("result");
+}
+
+/* ---------- Buttons ---------- */
+$("play").onclick=startGame;$("again").onclick=startGame;
+$("menu").onclick=function(){show("start")};
+$("goAch").onclick=function(){showAch();show("achScreen")};
+$("back").onclick=function(){show("start")};
+$("snd").onclick=function(){soundOn=!soundOn;this.textContent="Sound: "+(soundOn?"on":"off");tone(500,.08)};
+show("start");
+})();
+</script>
+</body></html>
